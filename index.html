@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Party Games | Login</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+    <div class="card-login">
+        <h1>🎮 Party Games</h1>
+        
+        <div class="input-group">
+            <input id="usuario" type="text" placeholder="Usuario" autocomplete="off">
+        </div>
+        
+        <div class="input-group">
+            <input id="password" type="password" placeholder="Contraseña">
+        </div>
+
+        <button onclick="login()">Entrar al Lobby</button>
+
+        <p id="mensaje"></p>
+    </div>
+</div>
+
+<script src="usuarios.js"></script>
+<script src="auth.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Cuentas Claras Pro</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .history-item { font-size: 0.9rem; padding: 10px; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; }
+        .settlement-card { background: rgba(201,168,76,0.1); border: 1px solid var(--gold); padding: 15px; border-radius: 8px; margin-top: 20px; }
+        .plan-step { color: var(--gold); font-weight: bold; margin: 10px 0; border-left: 3px solid var(--gold); padding-left: 10px; }
+        /* Fix para el descuadre de nombres */
+        .player-row { display: flex !important; justify-content: space-between; align-items: center; width: 100%; white-space: nowrap; }
+    </style>
+</head>
+<body onload="verificarLogin(); cargarAmigos()">
+
+<header style="display:flex; justify-content:space-between; padding:15px;">
+    <button class="btn" style="width:auto; background:#334155" onclick="window.location.href='../APP/menu.html'">⬅ Volver</button>
+    <button class="btn" style="width:auto; background:var(--blood)" onclick="logout()">Salir</button>
+</header>
+
+<main class="container">
+    <h1>💰 Cuentas Claras</h1>
+    
+    <div class="panel-mystery" style="text-align:left;">
+        <label>¿Qué se compró?</label>
+        <input type="text" id="concepto" placeholder="Ej: Cervezas, Pizza..." style="width:100%; padding:10px; margin-bottom:15px;">
+
+        <label>¿Quién pagó?</label>
+        <select id="pagador" style="width:100%; padding:10px; margin-bottom:15px; background:#1e293b; color:white;"></select>
+        
+        <label>Monto Total (S/.)</label>
+        <input type="number" id="monto" style="width:100%; padding:10px; margin-bottom:15px;">
+
+        <label>¿Quiénes consumieron?</label>
+        <div id="participantes-list" style="max-height:150px; overflow-y:auto; margin-bottom:15px;"></div>
+        
+        <button class="btn" onclick="agregarGasto()">+ Registrar Gasto</button>
+    </div>
+
+    <h2 style="color:var(--gold); margin-top:2rem;">📝 Detalle de Gastos</h2>
+    <div id="historial" style="background:rgba(0,0,0,0.2); border-radius:8px;"></div>
+
+    <h2 style="color:var(--gold); margin-top:2rem;">🤝 Cómo pagar (Plan Final)</h2>
+    <div id="plan-pagos" class="settlement-card"></div>
+    
+    <button class="btn" style="background:#25D366; margin-top:20px;" onclick="compartirWhatsApp()">📲 Enviar Plan a WhatsApp</button>
+</main>
+
+<script src="../auth.js"></script>
+<script>
+    let historial = [];
+    let amigos = [];
+
+    function cargarAmigos() {
+        amigos = JSON.parse(localStorage.getItem("jugadores")) || [];
+        const select = document.getElementById('pagador');
+        const list = document.getElementById('participantes-list');
+        
+        amigos.forEach(nom => {
+            select.innerHTML += `<option value="${nom}">${nom}</option>`;
+            list.innerHTML += `<label class="player-row"><span>${nom}</span><input type="checkbox" checked value="${nom}"></label>`;
+        });
+    }
+
+    function agregarGasto() {
+        const concepto = document.getElementById('concepto').value || "Gasto común";
+        const pagador = document.getElementById('pagador').value;
+        const monto = parseFloat(document.getElementById('monto').value);
+        const part = Array.from(document.querySelectorAll('#participantes-list input:checked')).map(c => c.value);
+
+        if(isNaN(monto) || part.length === 0) return alert("Faltan datos");
+
+        historial.push({ concepto, pagador, monto, participantes: part });
+        document.getElementById('monto').value = "";
+        document.getElementById('concepto').value = "";
+        actualizarTodo();
+    }
+
+    function actualizarTodo() {
+        // 1. Mostrar Historial
+        const histDiv = document.getElementById('historial');
+        histDiv.innerHTML = historial.map(g => `
+            <div class="history-item">
+                <span><b>${g.concepto}</b> (Pagó: ${g.pagador})</span>
+                <span>S/. ${g.monto.toFixed(2)}</span>
+            </div>
+        `).join('');
+
+        // 2. Calcular Balances Netos
+        let balances = {};
+        amigos.forEach(a => balances[a] = 0);
+        historial.forEach(g => {
+            const cuota = g.monto / g.participantes.length;
+            g.participantes.forEach(p => balances[p] -= cuota);
+            balances[g.pagador] += g.monto;
+        });
+
+        // 3. Algoritmo de Liquidación (Quién paga a quién)
+        let deudores = Object.entries(balances).filter(x => x[1] < -0.01).map(x => ({n: x[0], s: Math.abs(x[1])}));
+        let acreedores = Object.entries(balances).filter(x => x[1] > 0.01).map(x => ({n: x[0], s: x[1]}));
+        
+        const planDiv = document.getElementById('plan-pagos');
+        planDiv.innerHTML = "";
+        let transacciones = [];
+
+        while(deudores.length > 0 && acreedores.length > 0) {
+            let d = deudores[0], a = acreedores[0];
+            let monto = Math.min(d.s, a.s);
+            transacciones.push(`✅ *${d.n}* debe pagar *S/. ${monto.toFixed(2)}* a *${a.n}*`);
+            
+            d.s -= monto; a.s -= monto;
+            if(d.s < 0.01) deudores.shift();
+            if(a.s < 0.01) acreedores.shift();
+        }
+
+        planDiv.innerHTML = transacciones.map(t => `<div class="plan-step">${t.replace(/\*/g, '')}</div>`).join('') || "Todo saldado";
+        window.ultimoPlan = transacciones.join('\n');
+    }
+
+    function compartirWhatsApp() {
+        if(!window.ultimoPlan) return alert("No hay deudas que cobrar.");
+        let msg = "*💰 PLAN DE PAGOS - CUENTAS CLARAS 💰*\n\n" + window.ultimoPlan + "\n\n_¡A pagar sus deudas!_ 🍻";
+        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+</script>
+</body>
+</html>

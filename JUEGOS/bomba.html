@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Bomba | Mystery Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        :root {
+            --blood: #8B0000;
+            --gold: #C9A84C;
+            --ink: #12121A;
+            --mist: #1E1E2E;
+        }
+
+        body { background: var(--ink); color: #E8E0D0; font-family: 'Cormorant Garamond', serif; }
+
+        .panel-mystery {
+            background: #0a0a0f;
+            border: 1px solid rgba(201,168,76,0.3);
+            padding: 2rem;
+            box-shadow: 0 0 50px rgba(0,0,0,0.9);
+            text-align: center;
+        }
+
+        h1 { font-family: 'Cinzel Decorative', cursive; color: var(--gold); }
+
+        /* Animación de la Bomba */
+        .bomb-container {
+            font-size: 6rem;
+            margin: 2rem 0;
+            transition: transform 0.3s ease;
+        }
+
+        .ticking {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); text-shadow: 0 0 20px var(--blood); }
+            100% { transform: scale(1); }
+        }
+
+        .category-box {
+            background: var(--mist);
+            border: 1px dashed var(--gold);
+            padding: 1.5rem;
+            font-size: 1.4rem;
+            margin-bottom: 2rem;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-pass {
+            background: linear-gradient(135deg, var(--blood), #5C0000);
+            font-family: 'Cinzel Decorative';
+            padding: 1.5rem;
+            font-size: 1.2rem;
+        }
+        /* Estilo general de los botones de dificultad */
+        .cat-chip {
+            background: var(--mist);
+            border: 1px solid rgba(201,168,76,0.2);
+            color: var(--pale);
+            padding: 10px 15px;
+            margin: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Cormorant Garamond', serif;
+            display: inline-block;
+            border-radius: 4px;
+        }
+
+        /* ESTADO SELECCIONADO: El cambio visual que faltaba */
+        .cat-chip.selected {
+            background: var(--blood); /* Rojo oscuro */
+            border-color: var(--gold); /* Borde dorado brillante */
+            color: white;
+            box-shadow: 0 0 15px rgba(201,168,76,0.3);
+            transform: scale(1.05); /* Se hace un poco más grande */
+        }
+    </style>
+</head>
+<body onload="verificarLogin(); prepararBomba()">
+
+<header>
+    <button class="btn-logout" style="background: #334155;" onclick="window.location.href='../APP/menu.html'">⬅ Volver</button>
+    <button class="btn-logout" onclick="logout()">Salir</button>
+</header>
+
+<main class="container">
+    <div class="panel-mystery">
+        
+        <div id="screen-setup" class="screen active">
+            <h1>La Bomba</h1>
+            <p style="opacity: 0.7; margin-bottom: 2rem;">Dí una palabra de la categoría y pasa el teléfono antes de que explote.</p>
+            
+            <label style="color: var(--gold); font-size: 0.8rem; letter-spacing: 2px;">SELECCIONA DIFICULTAD</label>
+            <div style="margin: 1.5rem 0;">
+                <button class="cat-chip selected" id="diff-1" onclick="setDiff(15, 30, 'diff-1')">Fácil (15-30s)</button>
+                <button class="cat-chip" id="diff-2" onclick="setDiff(10, 20, 'diff-2')">Rápido (10-20s)</button>
+                <button class="cat-chip" id="diff-3" onclick="setDiff(5, 15, 'diff-3')">Caos (5-15s)</button>
+            </div>
+
+            <button class="btn" onclick="iniciarJuego()">💣 ACTIVAR BOMBA</button>
+        </div>
+
+        <div id="screen-game" class="screen" style="display:none;">
+            <div class="category-box" id="current-category">...</div>
+            
+            <div class="bomb-container ticking" id="bomb-icon">💣</div>
+            
+            <p style="font-style: italic; margin-bottom: 2rem;">¡Rápido! Dí algo y presiona el botón.</p>
+            
+            <button class="btn btn-pass" onclick="pasarTurno()">¡SIGUIENTE!</button>
+        </div>
+
+        <div id="screen-boom" class="screen" style="display:none;">
+            <h1 style="color: var(--blood); font-size: 3rem;">💥 ¡BOOM!</h1>
+            <p style="margin: 2rem 0; font-size: 1.2rem;">La bomba explotó en tus manos.</p>
+            <button class="btn" onclick="location.reload()">↺ Reintentar</button>
+        </div>
+
+    </div>
+</main>
+
+<script src="../auth.js"></script>
+<script>
+    // Enlaces a sonidos de la librería de Google/PixaBay (puedes cambiarlos por tus propios .mp3)
+    const sfxExplosion = new Audio('https://actions.google.com/sounds/v1/explosions/explosion_large.ogg');
+    const sfxTick = new Audio('https://actions.google.com/sounds/v1/clocks/ticking_clock.ogg');
+
+    // Configuramos el tic-tac para que se repita
+    sfxTick.loop = true;
+
+    const CATEGORIAS = [
+        "Componentes de PC",
+        "Marcas de Cámaras CCTV",
+        "Protocolos de Red (TCP, UDP...)",
+        "Lenguajes de Programación",
+        "Platos típicos de Cusco",
+        "Calles de Urubamba",
+        "Marcas de Cerveza",
+        "Animales del Valle Sagrado",
+        "Cosas que encuentras en un Garage",
+        "Palabras en Alemán"
+    ];
+
+    let minTime = 15;
+    let maxTime = 30;
+    let timer;
+    let timeLeft;
+
+    function prepararBomba() {
+        // Inicialización básica
+    }
+
+    function setDiff(min, max, id) {
+    minTime = min;
+    maxTime = max;
+
+    // 1. Quitamos la clase 'selected' de todos los botones de dificultad
+    document.querySelectorAll('.cat-chip').forEach(boton => {
+        boton.classList.remove('selected');
+    });
+
+    // 2. Se la agregamos únicamente al botón que recibió el clic
+    const botonActivo = document.getElementById(id);
+    if (botonActivo) {
+        botonActivo.classList.add('selected');
+    }
+    
+    console.log(`Dificultad cambiada: ${min}-${max} segundos.`);
+}
+
+    function iniciarJuego() {
+        // Elegir categoría al azar
+        const cat = CATEGORIAS[Math.floor(Math.random() * CATEGORIAS.length)];
+        document.getElementById('current-category').innerText = cat;
+
+        // Definir tiempo aleatorio de la bomba
+        timeLeft = Math.floor(Math.random() * (maxTime - minTime + 1)) + minTime;
+        
+        sfxTick.currentTime = 0; // Reinicia el sonido
+        sfxTick.play(); // Inicia el tic-tac constante
+        
+        showScreen('screen-game');
+        
+        // Iniciar cuenta regresiva interna
+        timer = setInterval(() => {
+            timeLeft--;
+            
+            // Acelerar la animación visual a medida que queda menos tiempo
+            const pulseSpeed = timeLeft > 10 ? 1 : (timeLeft > 5 ? 0.5 : 0.2);
+            document.getElementById('bomb-icon').style.animationDuration = `${pulseSpeed}s`;
+
+            if (timeLeft <= 0) {
+                explotar();
+            }
+        }, 1000);
+    }
+
+    function pasarTurno() {
+        // En este juego el botón solo sirve para dar feedback visual al jugador
+        // de que "pasó la bomba", el tiempo sigue corriendo igual.
+        const bomb = document.getElementById('bomb-icon');
+        bomb.style.transform = "scale(0.8)";
+        setTimeout(() => bomb.style.transform = "scale(1)", 100);
+    }
+
+    function explotar() {
+    clearInterval(timer);
+    
+    // Detener tic-tac y reproducir explosión
+    sfxTick.pause();
+    sfxExplosion.play();
+    
+    showScreen('screen-boom');
+    
+    // Vibración (si el móvil lo permite)
+    if (navigator.vibrate) navigator.vibrate([500, 100, 500]);
+    }
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+        document.getElementById(id).style.display = 'block';
+    }
+</script>
+</body>
+</html>

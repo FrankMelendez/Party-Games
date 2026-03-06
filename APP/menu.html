@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Party Games | Lobby</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body onload="verificarLogin(); mostrarUsuario()">
+
+<header>
+    <div class="user-info">
+        <h2>Hola, <span id="nombre-display">...</span></h2>
+    </div>
+    <button class="btn-logout" onclick="logout()">Salir</button>
+</header>
+
+<main class="container">
+    <h1 style="margin-top: 2rem;">¿A qué jugamos hoy?</h1>
+
+    <div class="grid">
+        <a class="card-game" href="../JUEGOS/dados.html">
+            <span class="card-icon">🎲</span>
+            <p>Dados</p>
+        </a>
+
+        <a class="card-game" href="../JUEGOS/impostor.html">
+            <span class="card-icon">🕵️</span>
+            <p>Impostor</p>
+        </a>
+
+        <a class="card-game" href="../JUEGOS/ruleta.html">
+            <span class="card-icon">🎡</span>
+            <p>Ruleta</p>
+        </a>
+
+        <a class="card-game" href="../JUEGOS/verdad-reto.html">
+            <span class="card-icon">🎭</span>
+            <p>Verdad o Reto</p>
+        </a>
+
+        <a class="card-game" href="../JUEGOS/mas-probable.html">
+            <span class="card-icon">🔍</span>
+            <p>¿Quién es más probable que...?</p>
+        </a>
+
+        <a class="card-game" href="../JUEGOS/bomba.html">
+            <span class="card-icon">💣</span>
+            <p>La Bomba</p>
+        </a>
+
+        <a class="card-game" href="../JUEGOS/cuentas.html">
+            <span class="card-icon">💸</span>
+            <p>La hora de pagar</p>
+        </a>
+
+        <a class="card-game" href="jugadores.html">
+            <span class="card-icon">👥</span>
+            <p>Gestionar Amigos</p>
+        </a>
+    </div>
+</main>
+
+<script src="../auth.js"></script>
+<script>
+    function mostrarUsuario() {
+        const nombre = localStorage.getItem("user_name") || "Jugador";
+        document.getElementById("nombre-display").innerText = nombre;
+    }
+</script>
+
+</body>
+</html>

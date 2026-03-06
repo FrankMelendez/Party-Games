@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Party Games | Ruleta</title>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .wheel-box {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 2rem auto;
+        }
+
+        /* La flecha indicadora */
+        .pointer {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0; 
+            height: 0; 
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 30px solid var(--primary);
+            z-index: 10;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5), 0 0 0 10px var(--card-bg);
+            /* El efecto 'cubic-bezier' hace que frene suavemente como una ruleta real */
+            transition: transform 4s cubic-bezier(0.1, 0, 0.2, 1);
+        }
+
+        #ganador-display {
+            font-size: 1.5rem;
+            color: var(--primary);
+            font-weight: bold;
+            margin-top: 1rem;
+            min-height: 2rem;
+        }
+    </style>
+</head>
+<body onload="verificarLogin(); iniciarRuleta()">
+
+<header>
+    <button class="btn-logout" style="background: #334155;" onclick="window.location.href='../APP/menu.html'">⬅ Volver</button>
+    <button class="btn-logout" onclick="logout()">Salir</button>
+</header>
+
+<main class="container">
+    <h1>🎡 Ruleta de la Suerte</h1>
+    
+    <div class="wheel-box">
+        <div class="pointer"></div>
+        <canvas id="canvas" width="500" height="500"></canvas>
+    </div>
+
+    <div id="ganador-display"></div>
+
+    <button id="btn-girar" onclick="girar()">¡GIRAR RUEDA!</button>
+</main>
+
+<script src="../auth.js"></script>
+<script>
+    let opciones = [];
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    let anguloActual = 0;
+
+    function iniciarRuleta() {
+        // Obtenemos los amigos reales registrados
+        const amigos = JSON.parse(localStorage.getItem("jugadores")) || [];
+        
+        // Si no hay amigos, usamos opciones por defecto
+        opciones = amigos.length >= 2 ? amigos : ["Opción A", "Opción B", "Opción C", "Opción D"];
+        
+        dibujarRuleta();
+    }
+
+    function dibujarRuleta() {
+        const cant = opciones.length;
+        const arco = (2 * Math.PI) / cant;
+        const colores = ["#1e293b", "#334155", "#475569", "#111827"];
+
+        ctx.clearRect(0, 0, 500, 500);
+
+        opciones.forEach((texto, i) => {
+            const angulo = i * arco;
+            
+            // Dibujar tajada
+            ctx.beginPath();
+            ctx.fillStyle = colores[i % colores.length];
+            ctx.moveTo(250, 250);
+            ctx.arc(250, 250, 250, angulo, angulo + arco);
+            ctx.lineTo(250, 250);
+            ctx.fill();
+            ctx.strokeStyle = "rgba(255,255,255,0.1)";
+            ctx.stroke();
+
+            // Dibujar texto
+            ctx.save();
+            ctx.translate(250, 250);
+            ctx.rotate(angulo + arco / 2);
+            ctx.textAlign = "right";
+            ctx.fillStyle = "white";
+            ctx.font = "bold 24px Arial";
+            ctx.fillText(texto, 230, 10);
+            ctx.restore();
+        });
+    }
+
+    function girar() {
+        const btn = document.getElementById("btn-girar");
+        const display = document.getElementById("ganador-display");
+        
+        btn.disabled = true;
+        display.innerText = "⏳ Girando...";
+
+        // Calculamos un giro aleatorio (mínimo 5 vueltas completas)
+        const vueltas = 5 + Math.random() * 5;
+        const extraAngulo = Math.random() * (2 * Math.PI);
+        anguloActual += (vueltas * 2 * Math.PI) + extraAngulo;
+
+        canvas.style.transform = `rotate(${anguloActual}rad)`;
+
+        // Esperar a que termine la animación (4s definidos en CSS)
+        setTimeout(() => {
+            btn.disabled = false;
+            determinarGanador();
+        }, 4000);
+    }
+
+    function determinarGanador() {
+    const cant = opciones.length;
+    const arco = (2 * Math.PI) / cant;
+
+    // 1. Obtenemos el ángulo final normalizado (entre 0 y 2PI)
+    const anguloFinal = anguloActual % (2 * Math.PI);
+
+    /**
+     * LÓGICA DE PRECISIÓN:
+     * La flecha está arriba (1.5 * PI). 
+     * Queremos saber qué tajada terminó bajo ese punto.
+     * La fórmula es: (Posición_Flecha - Rotación_Rueda) / Tamaño_Tajada
+     */
+    let indiceGanador = Math.floor((1.5 * Math.PI - anguloFinal) / arco);
+
+    // 2. Corregimos si el índice da negativo (vuelta al array)
+    while (indiceGanador < 0) {
+        indiceGanador += cant;
+    }
+    indiceGanador = indiceGanador % cant;
+
+    const ganador = opciones[indiceGanador];
+    document.getElementById("ganador-display").innerText = `🎉 ¡Ganó ${ganador}!`;
+    
+    // Opcional: Lanzar confetti o alerta
+    console.log("Ganador calculado en el índice:", indiceGanador);
+}
+</script>
+
+</body>
+</html>

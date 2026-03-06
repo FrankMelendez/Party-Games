@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Party Games | Dados</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body onload="verificarLogin()">
+
+<header>
+    <button class="btn-logout" style="background: #334155;" onclick="window.location.href='../APP/menu.html'">⬅ Menú</button>
+    <button class="btn-logout" onclick="logout()">Salir</button>
+</header>
+
+<main class="container">
+    <h1>🎲 Lanza el Dado</h1>
+    
+    <div class="dice-container">
+        <div id="resultado-dado">?</div>
+    </div>
+
+    <p id="quien-lanza" style="color: var(--text-dim); margin-bottom: 2rem;"></p>
+
+    <button id="btn-lanzar" onclick="lanzar()">¡LANZAR!</button>
+</main>
+
+<script src="../../auth.js"></script>
+<script>
+    const diceFaces = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
+
+    function lanzar() {
+        const dadoElement = document.getElementById("resultado-dado");
+        const btn = document.getElementById("btn-lanzar");
+        
+        // Bloquear botón y añadir animación
+        btn.disabled = true;
+        dadoElement.classList.add("shaking");
+
+        // Simular que el dado gira por 1 segundo
+        let count = 0;
+        const interval = setInterval(() => {
+            const randomTmp = Math.floor(Math.random() * 6);
+            dadoElement.innerText = diceFaces[randomTmp];
+            count++;
+            
+            if (count > 10) {
+                clearInterval(interval);
+                finalizarLanzamiento();
+            }
+        }, 80);
+    }
+
+    function finalizarLanzamiento() {
+        const dadoElement = document.getElementById("resultado-dado");
+        const btn = document.getElementById("btn-lanzar");
+        const numero = Math.floor(Math.random() * 6) + 1;
+
+        dadoElement.classList.remove("shaking");
+        dadoElement.innerText = diceFaces[numero - 1];
+        
+        // Efecto visual final de rebote
+        dadoElement.style.transform = "scale(1.2)";
+        setTimeout(() => dadoElement.style.transform = "scale(1)", 200);
+        
+        btn.disabled = false;
+    }
+</script>
+
+</body>
+</html>

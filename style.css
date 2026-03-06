@@ -1,0 +1,260 @@
+:root {
+    --bg-color: #0f172a;
+    --card-bg: #1e293b;
+    --primary: #22c55e;
+    --primary-hover: #16a34a;
+    --text: #f8fafc;
+    --text-dim: #94a3b8;
+    --danger: #ef4444;
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text);
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Contenedor Principal */
+.container {
+    width: 100%;
+    max-width: 400px;
+    margin: auto;
+    padding: 2rem;
+}
+
+/* Card Estilo Moderno */
+.card-login {
+    background: var(--card-bg);
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: var(--shadow);
+    text-align: center;
+}
+
+h1 { font-size: 1.8rem; margin-bottom: 1.5rem; }
+
+/* Inputs Modernos */
+.input-group {
+    margin-bottom: 1rem;
+    text-align: left;
+}
+
+input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #334155;
+    background: #0f172a;
+    color: white;
+    font-size: 1rem;
+    margin-top: 0.5rem;
+    transition: border-color 0.2s;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+/* Botones */
+button {
+    width: 100%;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 0.5rem;
+    background: var(--primary);
+    color: white;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+}
+
+button:hover { background: var(--primary-hover); }
+button:active { transform: scale(0.98); }
+
+/* Mensajes de error */
+#mensaje {
+    color: var(--danger);
+    font-size: 0.9rem;
+    margin-top: 1rem;
+    min-height: 1.2rem;
+}
+
+/* Utilidades para el menú */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    padding: 1rem;
+}
+
+.card-game {
+    background: var(--card-bg);
+    padding: 1.5rem;
+    border-radius: 1rem;
+    text-decoration: none;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: transform 0.2s;
+}
+
+.card-game:hover { transform: translateY(-5px); }
+
+/* Estilos para el Header del Menú */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: var(--card-bg);
+    border-bottom: 1px solid #334155;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.user-info h2 {
+    font-size: 1.1rem;
+    color: var(--text);
+}
+
+.user-info span {
+    color: var(--primary);
+    font-weight: bold;
+}
+
+.btn-logout {
+    background: var(--danger);
+    width: auto;
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+}
+
+/* Ajuste para la Grid de Juegos */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1.5rem;
+    padding: 2rem;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.card-game {
+    background: var(--card-bg);
+    border: 1px solid #334155;
+    padding: 2rem 1rem;
+    border-radius: 1.2rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow);
+}
+
+.card-game:hover {
+    border-color: var(--primary);
+    transform: translateY(-8px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+}
+
+.card-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.card-game p {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+/* Estilos para la lista de jugadores */
+.player-list {
+    list-style: none;
+    margin-top: 1.5rem;
+}
+
+.player-item {
+    background: var(--card-bg);
+    margin-bottom: 0.8rem;
+    padding: 1rem;
+    border-radius: 0.8rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid #334155;
+    animation: fadeIn 0.3s ease;
+}
+
+.player-name {
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.btn-delete {
+    background: none;
+    color: var(--danger);
+    width: auto;
+    padding: 5px 10px;
+    font-size: 1.2rem;
+    border-radius: 50%;
+}
+
+.btn-delete:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Contenedor del dado */
+.dice-container {
+    perspective: 1000px;
+    margin: 3rem auto;
+    width: 100px;
+    height: 100px;
+}
+
+#resultado-dado {
+    font-size: 5rem;
+    background: white;
+    color: #121212;
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    transition: transform 0.1s;
+}
+
+/* Animación de agitado */
+.shaking {
+    animation: shake 0.2s infinite;
+}
+
+@keyframes shake {
+    0% { transform: translate(2px, 1px) rotate(0deg); }
+    20% { transform: translate(-1px, -2px) rotate(-1deg); }
+    40% { transform: translate(-3px, 0px) rotate(1deg); }
+    60% { transform: translate(3px, 2px) rotate(0deg); }
+    80% { transform: translate(1px, -1px) rotate(1deg); }
+    100% { transform: translate(-1px, 2px) rotate(-1deg); }
+}

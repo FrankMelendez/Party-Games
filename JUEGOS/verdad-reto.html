@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verdad o Reto | Mystery Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        :root {
+            --blood: #8B0000;
+            --gold: #C9A84C;
+            --ink: #12121A;
+            --mist: #1E1E2E;
+        }
+
+        body { background: var(--ink); color: #E8E0D0; font-family: 'Cormorant Garamond', serif; }
+
+        .panel-mystery {
+            background: #0a0a0f;
+            border: 1px solid rgba(201,168,76,0.3);
+            padding: 2rem;
+            box-shadow: 0 0 50px rgba(0,0,0,0.9);
+            text-align: center;
+        }
+
+        h1 { font-family: 'Cinzel Decorative', cursive; color: var(--gold); }
+
+        .btn-choice {
+            width: 45%;
+            margin: 10px 2.5%;
+            padding: 20px;
+            font-family: 'Cinzel Decorative';
+            font-size: 0.9rem;
+            border: 1px solid var(--gold);
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-verdad { background: var(--mist); color: var(--gold); }
+        .btn-reto { background: var(--blood); color: white; border-color: #5C0000; }
+
+        .display-card {
+            background: var(--mist);
+            border: 1px solid var(--gold);
+            padding: 2rem;
+            margin: 2rem 0;
+            min-height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-style: italic;
+        }
+
+        #player-name {
+            font-family: 'Cinzel Decorative';
+            color: var(--gold);
+            font-size: 1.8rem;
+            text-shadow: 0 0 15px rgba(201,168,76,0.4);
+        }
+        /* Estilo para los botones de categoría (Chips) */
+        .category-chips {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .cat-chip {
+            background: var(--mist);
+            border: 1px solid rgba(201,168,76,0.3);
+            color: var(--pale);
+            padding: 8px 15px;
+            cursor: pointer;
+            border-radius: 20px;
+            font-family: 'Cormorant Garamond', serif;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .cat-chip.selected {
+            background: var(--blood);
+            border-color: var(--gold);
+            color: white;
+            box-shadow: 0 0 10px rgba(201,168,76,0.4);
+        }
+
+        /* Arreglo para la lista de jugadores que se veía descuadrada */
+        .player-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            margin-bottom: 5px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .player-row span {
+            font-size: 1.1rem;
+            color: var(--pale);
+        }
+
+        .player-row input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body onload="verificarLogin(); prepararJuego()">
+
+<header>
+    <button class="btn-logout" style="background: #334155;" onclick="window.location.href='../APP/menu.html'">⬅ Volver</button>
+    <button class="btn-logout" onclick="logout()">Salir</button>
+</header>
+
+<main class="container">
+    <div class="panel-mystery">
+        
+        <div id="screen-setup" class="screen active">
+            <h1>Verdad o Reto</h1>
+            <p style="margin-bottom: 1.5rem; opacity: 0.7;">El destino elegirá quién debe confesar o actuar.</p>
+            <div id="lista-check" style="text-align: left; margin: 1rem 0; max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 10px;">
+                </div>
+            <button class="btn" onclick="iniciarPartida()">⚔ COMENZAR</button>
+            <label style="color: var(--gold); font-size: 0.8rem; letter-spacing: 1px;">ELIXE TU DESTINO (MAZO)</label>
+<div id="category-chips" style="margin: 1rem 0; display: flex; flex-wrap: wrap; justify-content: center;">
+    </div>
+        </div>
+
+        <div id="screen-choice" class="screen" style="display:none;">
+            <p style="letter-spacing: 2px; opacity: 0.6;">ES EL TURNO DE:</p>
+            <h2 id="player-name">...</h2>
+            
+            <div style="margin-top: 2rem;">
+                <button class="btn-choice btn-verdad" onclick="mostrarReto('verdad')">VERDAD</button>
+                <button class="btn-choice btn-reto" onclick="mostrarReto('reto')">RETO</button>
+            </div>
+        </div>
+
+        <div id="screen-result" class="screen" style="display:none;">
+            <h2 id="tipo-titulo" style="font-family: 'Cinzel Decorative'; font-size: 1rem; color: var(--gold);"></h2>
+            <div class="display-card" id="text-result"></div>
+            <button class="btn" onclick="siguienteTurno()">Siguiente Jugador →</button>
+        </div>
+
+    </div>
+</main>
+
+<script src="../auth.js"></script>
+<script>
+    const DATABASE = {
+    "Clásico": {
+        verdad: ["¿Quién fue tu primer crush?", "¿Has mentido para salir de una cita?", "¿Cuál es tu mayor miedo?"],
+        reto: ["Baila sin música por 30 segundos.", "Muestra tu última foto en la galería.", "Imita a alguien de la mesa."]
+    },
+    "Sistemas": {
+        verdad: ["¿Alguna vez copiaste código de StackOverflow sin entenderlo?", "¿Cuál es el bug más tonto que te tomó horas arreglar?", "¿Has fingido que trabajas cuando solo estabas en YouTube?"],
+        reto: ["Explica qué es una VLAN como si tuvieras 5 años.", "Escribe un 'Hola Mundo' en un papel usando tu mano no dominante.", "Simula que eres un servidor y quédate 'caído' (congelado) por 1 minuto."]
+    },
+    "Urubamba": {
+        verdad: ["¿Cuál es tu lugar favorito para comer en el Mercado de Productores?", "¿Alguna vez te perdiste yendo a algún anexo?", "¿Qué es lo más raro que has visto en la Plaza de Armas?"],
+        reto: ["Actúa como si estuvieras regateando el precio de una chicha.", "Nombra 5 calles de Urubamba en menos de 10 segundos.", "Imita el sonido de un mototaxi subiendo una cuesta."]
+    },
+    "Estudiante": {
+        verdad: ["¿Cuál es la materia que más odias de la Universidad Andina?", "¿Alguna vez te dormiste en una clase virtual?", "¿Cuál es tu técnica para copiar en un examen?"],
+        reto: ["Llama a un compañero y dile que el profesor adelantó el examen final.", "Haz una sentadilla por cada semestre que llevas en la carrera.", "Dibuja el logo de la universidad con los ojos cerrados."]
+    }
+};
+
+    let jugadoresActivos = [];
+    let turnoActual = 0;
+    let categoriaSeleccionada = "Clásico";
+
+    function prepararJuego() {
+    // 1. Cargar Categorías con funcionalidad de clic real
+    const catWrap = document.getElementById('category-chips');
+    catWrap.innerHTML = ""; // Limpiar
+    catWrap.className = "category-chips"; // Aplicar clase de flexbox
+
+    Object.keys(DATABASE).forEach(cat => {
+        const btn = document.createElement('div');
+        btn.className = 'cat-chip';
+        if(cat === categoriaSeleccionada) btn.classList.add('selected');
+        btn.textContent = cat;
+        
+        btn.onclick = () => {
+            // Quitar clase selected de todos y ponerla al actual
+            document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('selected'));
+            btn.classList.add('selected');
+            categoriaSeleccionada = cat;
+        };
+        catWrap.appendChild(btn);
+    });
+
+    // 2. Cargar Amigos con filas alineadas
+    const amigos = JSON.parse(localStorage.getItem("jugadores")) || [];
+    const container = document.getElementById('lista-check');
+    container.innerHTML = ""; // Limpiar
+
+    if(amigos.length === 0) {
+        container.innerHTML = "<p style='opacity:0.5;'>No hay amigos registrados.</p>";
+    } else {
+        amigos.forEach(nom => {
+            const label = document.createElement("label");
+            label.className = "player-row";
+            label.innerHTML = `
+                <span>${nom}</span>
+                <input type="checkbox" checked value="${nom}">
+            `;
+            container.appendChild(label);
+        });
+    }
+}
+
+    function iniciarPartida() {
+        const checks = document.querySelectorAll('#lista-check input:checked');
+        jugadoresActivos = Array.from(checks).map(c => c.value);
+
+        if (jugadoresActivos.length < 2) return alert("Selecciona al menos 2 personas.");
+        
+        // Barajar jugadores
+        jugadoresActivos.sort(() => Math.random() - 0.5);
+        turnoActual = 0;
+        mostrarEleccion();
+    }
+
+    function mostrarEleccion() {
+        document.getElementById('player-name').innerText = jugadoresActivos[turnoActual];
+        showScreen('screen-choice');
+    }
+
+    function mostrarReto(tipo) {
+    // Obtenemos las frases de la categoría elegida
+    const mazoActivo = DATABASE[categoriaSeleccionada][tipo];
+    const frase = mazoActivo[Math.floor(Math.random() * mazoActivo.length)];
+    
+    document.getElementById('tipo-titulo').innerText = `${categoriaSeleccionada.toUpperCase()} - ${tipo.toUpperCase()}`;
+    document.getElementById('text-result').innerText = `"${frase}"`;
+    showScreen('screen-result');
+    }
+
+    function siguienteTurno() {
+        turnoActual = (turnoActual + 1) % jugadoresActivos.length;
+        mostrarEleccion();
+    }
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+        document.getElementById(id).style.display = 'block';
+    }
+</script>
+</body>
+</html>

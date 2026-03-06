@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¿Quién es más probable? | Mystery Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        :root {
+            --blood: #8B0000;
+            --gold: #C9A84C;
+            --ink: #12121A;
+            --mist: #1E1E2E;
+        }
+
+        body { background: var(--ink); color: #E8E0D0; font-family: 'Cormorant Garamond', serif; }
+
+        .panel-mystery {
+            background: #0a0a0f;
+            border: 1px solid rgba(201,168,76,0.3);
+            padding: 2rem;
+            box-shadow: 0 0 50px rgba(0,0,0,0.9);
+            text-align: center;
+        }
+
+        h1 { font-family: 'Cinzel Decorative', cursive; color: var(--gold); margin-bottom: 0.5rem; }
+
+        .question-box {
+            background: var(--mist);
+            border: 1px solid var(--gold);
+            padding: 2.5rem 1.5rem;
+            margin: 2rem 0;
+            font-size: 1.6rem;
+            font-style: italic;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .voting-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 1rem;
+        }
+
+        .btn-vote {
+            background: rgba(201,168,76,0.1);
+            border: 1px solid rgba(201,168,76,0.3);
+            color: var(--pale);
+            padding: 12px;
+            cursor: pointer;
+            font-family: 'Cormorant Garamond';
+            font-size: 1.1rem;
+            transition: 0.3s;
+        }
+
+        .btn-vote:hover { background: var(--gold); color: var(--ink); }
+
+        .score-list {
+            text-align: left;
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 1.5rem;
+        }
+
+        .score-item {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(201,168,76,0.1);
+            padding: 5px 0;
+        }
+    </style>
+</head>
+<body onload="verificarLogin(); prepararJuego()">
+
+<header>
+    <button class="btn-logout" style="background: #334155;" onclick="window.location.href='../APP/menu.html'">⬅ Volver</button>
+    <button class="btn-logout" onclick="logout()">Salir</button>
+</header>
+
+<main class="container">
+    <div class="panel-mystery">
+        
+        <div id="screen-setup" class="screen active">
+            <h1>¿Quién es más probable?</h1>
+            <p style="opacity: 0.7; margin-bottom: 1.5rem;">A la cuenta de tres, ¡todos señalen!</p>
+            <div id="lista-check" class="score-list" style="max-height: 200px; overflow-y: auto;">
+                </div>
+            <button class="btn" onclick="iniciarJuego()">⚔ COMENZAR</button>
+        </div>
+
+        <div id="screen-game" class="screen" style="display:none;">
+            <p style="letter-spacing: 2px; opacity: 0.5;">LA PREGUNTA ES:</p>
+            <div class="question-box" id="question-text">...</div>
+            
+            <p style="font-size: 0.9rem; color: var(--gold);">¿Quién ganó esta ronda? (Haz clic para sumar punto)</p>
+            <div class="voting-grid" id="voting-area">
+                </div>
+            
+            <button class="btn secondary" style="margin-top: 2rem;" onclick="siguientePregunta()">Siguiente Pregunta →</button>
+            <button class="btn secondary" style="background:none; border:none; color:var(--gold);" onclick="verPuntajes()">Ver Puntajes Finales</button>
+        </div>
+
+        <div id="screen-scores" class="screen" style="display:none;">
+            <h1>Puntajes</h1>
+            <div class="score-list" id="final-scores"></div>
+            <button class="btn" onclick="location.reload()">↺ Nueva Partida</button>
+        </div>
+
+    </div>
+</main>
+
+<script src="../auth.js"></script>
+<script>
+    const PREGUNTAS = [
+        "¿Quién es más probable que olvide las llaves del garage?",
+        "¿Quién es más probable que termine su tesis primero?",
+        "¿Quién es más probable que borre una base de datos por error?",
+        "¿Quién es más probable que se pierda en el Mercado de Productores?",
+        "¿Quién es más probable que termine viviendo en Alemania?",
+        "¿Quién es más probable que llegue tarde a una reunión en la Plaza de Armas?",
+        "¿Quién es más probable que gaste todo su dinero en mototaxis?",
+        "¿Quién es más probable que pase 10 horas seguidas programando?",
+        "¿Quién es más probable que se vuelva famoso en TikTok?",
+        "¿Quién es más probable que olvide el cargador de su laptop?"
+    ];
+
+    let jugadores = [];
+    let puntajes = {};
+    let preguntasUsadas = [];
+
+    function prepararJuego() {
+        const amigos = JSON.parse(localStorage.getItem("jugadores")) || [];
+        const container = document.getElementById('lista-check');
+        amigos.forEach(nom => {
+            container.innerHTML += `<label class="player-row"><input type="checkbox" checked value="${nom}"> <span>${nom}</span></label>`;
+        });
+    }
+
+    function iniciarJuego() {
+        const checks = document.querySelectorAll('#lista-check input:checked');
+        jugadores = Array.from(checks).map(c => c.value);
+
+        if (jugadores.length < 2) return alert("Selecciona al menos 2 personas.");
+
+        jugadores.forEach(j => puntajes[j] = 0);
+        generarBotonesVoto();
+        siguientePregunta();
+        showScreen('screen-game');
+    }
+
+    function generarBotonesVoto() {
+        const area = document.getElementById('voting-area');
+        area.innerHTML = "";
+        jugadores.forEach(j => {
+            area.innerHTML += `<button class="btn-vote" onclick="sumarPunto('${j}')">${j}</button>`;
+        });
+    }
+
+    function siguientePregunta() {
+        if (preguntasUsadas.length === PREGUNTAS.length) preguntasUsadas = [];
+        
+        let index;
+        do {
+            index = Math.floor(Math.random() * PREGUNTAS.length);
+        } while (preguntasUsadas.includes(index));
+
+        preguntasUsadas.push(index);
+        document.getElementById('question-text').innerText = PREGUNTAS[index];
+    }
+
+    function sumarPunto(jugador) {
+        puntajes[jugador]++;
+        alert(`¡Punto para ${jugador}!`);
+        siguientePregunta();
+    }
+
+    function verPuntajes() {
+        const wrap = document.getElementById('final-scores');
+        wrap.innerHTML = "";
+        
+        // Ordenar por puntaje de mayor a menor
+        const ranking = Object.entries(puntajes).sort((a,b) => b[1] - a[1]);
+        
+        ranking.forEach(([nom, pts]) => {
+            wrap.innerHTML += `
+                <div class="score-item">
+                    <span>👤 ${nom}</span>
+                    <span style="color:var(--gold)">${pts} pts</span>
+                </div>`;
+        });
+        showScreen('screen-scores');
+    }
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+        document.getElementById(id).style.display = 'block';
+    }
+</script>
+</body>
+</html>
