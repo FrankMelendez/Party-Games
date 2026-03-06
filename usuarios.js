@@ -3,6 +3,7 @@ const usuarios = [
     {usuario: "Pedro", password: "pedro1"},
     {usuario: "Pamela", password: "pamela1"},
     {usuario: "GPiero", password: "gpiero1"},
-    {usuario: "Stiv", password: "stiv1"}
+    {usuario: "Stiv", password: "stiv1"},
+    {usuario: "Beyda", password: "beyda1"}
 
 ];
