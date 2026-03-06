@@ -1,6 +1,8 @@
 const usuarios = [
-    {usuario: "frank", password: "1234"},
-    {usuario: "luis", password: "abcd"},
-    {usuario: "ana", password: "pass123"},
-    {usuario: "pedro", password: "5678"}
+    {usuario: "Frank", password: "frank1234"},
+    {usuario: "Pedro", password: "pedro1"},
+    {usuario: "Pamela", password: "pamela1"},
+    {usuario: "GPiero", password: "gpiero1"},
+    {usuario: "Stiv", password: "stiv1"}
+
 ];
